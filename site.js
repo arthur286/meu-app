@@ -1,92 +1,149 @@
-const taskInput = document.getElementById('taskInput');
-const addTaskBtn = document.getElementById('addTaskBtn');
-const taskList = document.getElementById('taskList');
-const voiceBtn = document.getElementById('voiceBtn');
+const taskInput = document.getElementById("task-input");
+const addTaskBtn = document.getElementById("add-task-btn");
+const taskList = document.getElementById("task-list");
+const favoriteTasksList = document.getElementById("favorite-tasks-list");
+const homeTasksList = document.getElementById("home-tasks-list");
+const workTasksList = document.getElementById("work-tasks-list");
+const collegeTasksList = document.getElementById("college-tasks-list");
+const allTasksBtn = document.getElementById("all-tasks-btn");
+const favoriteTasksBtn = document.getElementById("favorite-tasks-btn");
+const homeTasksBtn = document.getElementById("home-tasks-btn");
+const workTasksBtn = document.getElementById("work-tasks-btn");
+const collegeTasksBtn = document.getElementById("college-tasks-btn");
+const progressBar = document.getElementById("progress-bar");
+const progressText = document.getElementById("progress-text");
+const notification = document.getElementById("notification");
+const categorySelect = document.getElementById("category-select");
 
-let completedTasks = 0; // Contador de tarefas concluídas
+let tasks = [];
+let completedTaskCount = 0; // Contador de tarefas concluídas
 
-// Função para adicionar uma nova tarefa
+addTaskBtn.addEventListener("click", addTask);
+allTasksBtn.addEventListener("click", showAllTasks);
+favoriteTasksBtn.addEventListener("click", showFavoriteTasks);
+homeTasksBtn.addEventListener("click", showHomeTasks);
+workTasksBtn.addEventListener("click", showWorkTasks);
+collegeTasksBtn.addEventListener("click", showCollegeTasks);
+
 function addTask() {
     const taskText = taskInput.value.trim();
-    if (taskText) {
-        const newTask = document.createElement('div');
-        newTask.className = 'task-card';
-        newTask.innerHTML = `
-            <h3>${taskText}</h3>
-            <p>Data: ${new Date().toLocaleDateString()}</p>
-            <button class="completeBtn">Concluir</button>
-            <button class="favoriteBtn">⭐ Favoritar</button>
+    const category = categorySelect.value; // Obter a categoria selecionada
+    if (taskText !== "") {
+        const newTask = {
+            id: Date.now(),
+            text: taskText,
+            completed: false,
+            favorite: false,
+            category: category, // Adicionar categoria
+            createdAt: Date.now(), // Adicionar data de criação
+            completedAt: null, // Adicionar data de conclusão
+        };
+        tasks.push(newTask);
+        taskInput.value = "";
+        renderTasks();
+        updateProgress();
+    }
+}
+
+function renderTasks() {
+    taskList.innerHTML = "";
+    favoriteTasksList.innerHTML = "";
+    homeTasksList.innerHTML = "";
+    workTasksList.innerHTML = "";
+    collegeTasksList.innerHTML = "";
+
+    tasks.forEach(task => {
+        const taskCard = document.createElement("div");
+        taskCard.className = "task-card" + (task.completed ? " completed" : "");
+        taskCard.innerHTML = `
+            <h3>${task.text} (${task.category})</h3>
+            <div>
+                <button class="completeBtn" onclick="toggleComplete(${task.id})">Completar</button>
+                <button class="favoriteBtn" onclick="toggleFavorite(${task.id})">${task.favorite ? 'Remover Favorito' : 'Favoritar'}</button>
+                <button class="moveBtn" onclick="moveTask(${task.id})">Mover</button>
+                <button class="deleteBtn" onclick="deleteTask(${task.id})">Deletar</button>
+            </div>
+            ${task.completed ? `<p>Tempo para conclusão: ${calculateTimeElapsed(task.createdAt, task.completedAt)} segundos</p>` : ""}
         `;
-        taskList.appendChild(newTask);
-        taskInput.value = ''; // Limpa o campo de entrada
+        
+        // Renderizar nas listas apropriadas
+        taskList.appendChild(taskCard); // Adiciona à lista de todas as tarefas
 
-        // Adiciona evento ao botão de concluir
-        const completeBtn = newTask.querySelector('.completeBtn');
-        completeBtn.addEventListener('click', () => completeTask(newTask));
+        if (task.favorite) {
+            favoriteTasksList.appendChild(taskCard.cloneNode(true)); // Clone para favoritos
+        } 
+        if (task.category === "lazer") {
+            homeTasksList.appendChild(taskCard.cloneNode(true)); // Clone para lazer
+        } else if (task.category === "trabalho") {
+            workTasksList.appendChild(taskCard.cloneNode(true)); // Clone para Trabalho
+        } else if (task.category === "faculdade") {
+            collegeTasksList.appendChild(taskCard.cloneNode(true)); // Clone para Faculdade
+        }
+    });
+}
 
-        // Adiciona evento ao botão de favoritar
-        const favoriteBtn = newTask.querySelector('.favoriteBtn');
-        favoriteBtn.addEventListener('click', () => toggleFavorite(newTask));
+function calculateTimeElapsed(createdAt, completedAt) {
+    const elapsedTime = (completedAt - createdAt) / 1000; // Tempo em segundos
+    return Math.round(elapsedTime);
+}
+
+function toggleComplete(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+        task.completed = !task.completed;
+        task.completedAt = task.completed ? Date.now() : null; // Atualiza a data de conclusão
+        completedTaskCount += task.completed ? 1 : -1; // Atualiza o contador
+        renderTasks();
+        updateProgress();
+        checkRestNotification(); // Verifica se deve mostrar notificação
     }
 }
 
-// Função para concluir uma tarefa
-function completeTask(task) {
-    task.classList.add('completed'); // Adiciona a classe para estilizar
-    task.querySelector('.completeBtn').disabled = true; // Desabilita o botão
-    completedTasks++; // Incrementa o contador de tarefas concluídas
-
-    // Verifica se o número de tarefas concluídas é um múltiplo de 3
-    if (completedTasks % 3 === 0) {
-        askHealthQuestions();
+function checkRestNotification() {
+    if (completedTaskCount > 0 && completedTaskCount % 3 === 0) {
+        showNotification();
     }
 }
 
-// Função para favoritar/desfavoritar uma tarefa
-function toggleFavorite(task) {
-    task.classList.toggle('favorite'); // Alterna a classe de favorita
-    const favoriteBtn = task.querySelector('.favoriteBtn');
+function showNotification() {
+    notification.innerText = "🧘‍♂ Pausa para relaxar! Você já concluiu três tarefas! Que tal dar uma respirada, esticar as pernas, ou tomar um café? Cuidar de você também é produtividade! 🌱";
+    notification.classList.remove("hidden");
+    setTimeout(() => {
+        notification.classList.add("hidden");
+    }, 3000);
+}
 
-    // Altera o texto do botão de favorito
-    if (task.classList.contains('favorite')) {
-        favoriteBtn.textContent = '⭐ Favoritado';
-    } else {
-        favoriteBtn.textContent = '⭐ Favoritar';
+function toggleFavorite(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+        task.favorite = !task.favorite;
+        renderTasks();
     }
 }
 
-// Função para fazer as perguntas
-function askHealthQuestions() {
-    const response1 = prompt("Já bebeu água hoje?");
-    const response2 = prompt("Como está a sua saúde mental?");
-    const response3 = prompt("Como está se sentindo hoje?");
-    
-    // Aqui você pode processar as respostas como quiser
-    console.log(response1, response2, response3);
+function moveTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+        const newCategory = prompt("Para qual categoria você deseja mover? (lazer, trabalho, faculdade)");
+        if (["lazer", "trabalho", "faculdade"].includes(newCategory)) {
+            task.category = newCategory;
+            renderTasks();
+        } else {
+            alert("Categoria inválida! Por favor, escolha entre casa, trabalho ou faculdade.");
+        }
+    }
 }
 
-// Adiciona evento ao botão "Adicionar tarefa"
-addTaskBtn.addEventListener('click', addTask);
+function deleteTask(taskId) {
+    tasks = tasks.filter(task => task.id !== taskId);
+    renderTasks();
+    updateProgress();
+}
 
-// Configura o reconhecimento de voz
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
-
-recognition.lang = 'pt-BR';
-
-// Inicia o reconhecimento de voz
-voiceBtn.addEventListener('click', () => {
-    recognition.start();
-});
-
-// Lida com o resultado do reconhecimento de voz
-recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    taskInput.value = transcript; // Coloca o texto reconhecido no campo de entrada
-    addTask(); // Adiciona a tarefa automaticamente
-};
-
-// Lida com erros
-recognition.onerror = (event) => {
-    console.error('Erro no reconhecimento de voz: ', event.error);
-};
+function updateProgress() {
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(task => task.completed).length;
+    const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    progressBar.value = progressPercentage;
+    progressText.innerText = `${Math.round(progressPercentage)}% Concluído`;
+}
