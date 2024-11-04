@@ -40,110 +40,128 @@ function addTask() {
         };
         tasks.push(newTask);
         taskInput.value = "";
-        renderTasks();
+        renderTasks(); //
+        renderTasks(); // Renderizar as tarefas após adicionar
         updateProgress();
+        checkNotification();
     }
 }
 
 function renderTasks() {
+    // Limpar todas as listas
     taskList.innerHTML = "";
     favoriteTasksList.innerHTML = "";
     homeTasksList.innerHTML = "";
     workTasksList.innerHTML = "";
     collegeTasksList.innerHTML = "";
 
-    tasks.forEach(task => {
+    // Renderizar tarefas em "Todas as Tarefas"
+    tasks.forEach((task) => {
         const taskCard = document.createElement("div");
         taskCard.className = "task-card" + (task.completed ? " completed" : "");
         taskCard.innerHTML = `
-            <h3>${task.text} (${task.category})</h3>
-            <div>
-                <button class="completeBtn" onclick="toggleComplete(${task.id})">Completar</button>
-                <button class="favoriteBtn" onclick="toggleFavorite(${task.id})">${task.favorite ? 'Remover Favorito' : 'Favoritar'}</button>
-                <button class="moveBtn" onclick="moveTask(${task.id})">Mover</button>
-                <button class="deleteBtn" onclick="deleteTask(${task.id})">Deletar</button>
-            </div>
-            ${task.completed ? `<p>Tempo para conclusão: ${calculateTimeElapsed(task.createdAt, task.completedAt)} segundos</p>` : ""}
+            <h3>${task.text}</h3>
+            <p>Categoria: ${task.category.charAt(0).toUpperCase() + task.category.slice(1)}</p>
+            <button class="completeBtn" onclick="toggleComplete(${task.id})">${task.completed ? "Desfazer" : "Completar"}</button>
+            <button class="favoriteBtn" onclick="toggleFavorite(${task.id})">${task.favorite ? "Remover Favorito" : "Favoritar"}</button>
+            <button class="deleteBtn" onclick="deleteTask(${task.id})">Excluir</button>
         `;
-        
-        // Renderizar nas listas apropriadas
-        taskList.appendChild(taskCard); // Adiciona à lista de todas as tarefas
+        taskList.appendChild(taskCard);
 
+        // Renderizar na lista de favoritos
         if (task.favorite) {
-            favoriteTasksList.appendChild(taskCard.cloneNode(true)); // Clone para favoritos
-        } 
+            const favoriteCard = taskCard.cloneNode(true);
+            favoriteTasksList.appendChild(favoriteCard);
+        }
+
+        // Renderizar nas listas de categorias
         if (task.category === "lazer") {
-            homeTasksList.appendChild(taskCard.cloneNode(true)); // Clone para lazer
+            const homeCard = taskCard.cloneNode(true);
+            homeTasksList.appendChild(homeCard);
         } else if (task.category === "trabalho") {
-            workTasksList.appendChild(taskCard.cloneNode(true)); // Clone para Trabalho
+            const workCard = taskCard.cloneNode(true);
+            workTasksList.appendChild(workCard);
         } else if (task.category === "faculdade") {
-            collegeTasksList.appendChild(taskCard.cloneNode(true)); // Clone para Faculdade
+            const collegeCard = taskCard.cloneNode(true);
+            collegeTasksList.appendChild(collegeCard);
         }
     });
 }
 
-function calculateTimeElapsed(createdAt, completedAt) {
-    const elapsedTime = (completedAt - createdAt) / 1000; // Tempo em segundos
-    return Math.round(elapsedTime);
-}
-
 function toggleComplete(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.completed = !task.completed;
-        task.completedAt = task.completed ? Date.now() : null; // Atualiza a data de conclusão
-        completedTaskCount += task.completed ? 1 : -1; // Atualiza o contador
-        renderTasks();
-        updateProgress();
-        checkRestNotification(); // Verifica se deve mostrar notificação
-    }
-}
-
-function checkRestNotification() {
-    if (completedTaskCount > 0 && completedTaskCount % 3 === 0) {
-        showNotification();
-    }
-}
-
-function showNotification() {
-    notification.innerText = "🧘‍♂ Pausa para relaxar! Você já concluiu três tarefas! Que tal dar uma respirada, esticar as pernas, ou tomar um café? Cuidar de você também é produtividade! 🌱";
-    notification.classList.remove("hidden");
-    setTimeout(() => {
-        notification.classList.add("hidden");
-    }, 3000);
+    const task = tasks.find((t) => t.id === taskId);
+    task.completed = !task.completed;
+    task.completedAt = task.completed ? Date.now() : null; // Registrar a data de conclusão
+    renderTasks();
+    updateProgress();
+    checkNotification();
 }
 
 function toggleFavorite(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        task.favorite = !task.favorite;
-        renderTasks();
-    }
-}
-
-function moveTask(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-        const newCategory = prompt("Para qual categoria você deseja mover? (lazer, trabalho, faculdade)");
-        if (["lazer", "trabalho", "faculdade"].includes(newCategory)) {
-            task.category = newCategory;
-            renderTasks();
-        } else {
-            alert("Categoria inválida! Por favor, escolha entre casa, trabalho ou faculdade.");
-        }
-    }
+    const task = tasks.find((t) => t.id === taskId);
+    task.favorite = !task.favorite;
+    renderTasks();
 }
 
 function deleteTask(taskId) {
-    tasks = tasks.filter(task => task.id !== taskId);
+    tasks = tasks.filter((task) => task.id !== taskId);
     renderTasks();
     updateProgress();
 }
 
 function updateProgress() {
+    completedTaskCount = tasks.filter((task) => task.completed).length;
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.completed).length;
-    const progressPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    const progressPercentage = totalTasks ? (completedTaskCount / totalTasks) * 100 : 0;
     progressBar.value = progressPercentage;
     progressText.innerText = `${Math.round(progressPercentage)}% Concluído`;
+}
+
+function checkNotification() {
+    if (completedTaskCount % 3 === 0 && completedTaskCount > 0) {
+        notification.classList.remove("hidden");
+        setTimeout(() => {
+            notification.classList.add("hidden");
+        }, 5000); // Oculta a notificação após 5 segundos
+    }
+}
+
+function showAllTasks() {
+    taskList.style.display = "block";
+    favoriteTasksList.style.display = "none";
+    homeTasksList.style.display = "none";
+    workTasksList.style.display = "none";
+    collegeTasksList.style.display = "none";
+}
+
+function showFavoriteTasks() {
+    taskList.style.display = "none";
+    favoriteTasksList.style.display = "block";
+    homeTasksList.style.display = "none";
+    workTasksList.style.display = "none";
+    collegeTasksList.style.display = "none";
+}
+
+function showHomeTasks() {
+    taskList.style.display = "none";
+    favoriteTasksList.style.display = "none";
+    homeTasksList.style.display = "block";
+    workTasksList.style.display = "none";
+    collegeTasksList.style.display = "none";
+}
+
+function showWorkTasks() {
+    taskList.style.display = "none";
+    favoriteTasksList.style.display = "none";
+    homeTasksList.style.display = "none";
+    workTasksList.style.display = "block";
+    collegeTasksList.style.display = "none";
+}
+
+function showCollegeTasks() {
+    taskList.style.display = "none";
+    favoriteTasksList.style.display = "none";
+    homeTasksList.style.display = "none";
+    workTasksList.style.display = "none";
+    collegeTasksList.style.display = "block";
 }
