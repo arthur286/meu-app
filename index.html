@@ -3,126 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site de Tarefas</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Organizador de Tarefas</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="sidebar">
-    <h2>Minhas Tarefas</h2>
-    <ul>
-        <li>Todas as tarefas</li>
-        <li>Em andamento</li>
-        <li>Concluídas</li>
-        <li>Favoritas</li>
-    </ul>
-</div>
-
-<div class="main">
-    <header>
-        <input type="text" id="taskInput" placeholder="Adicionar tarefa...">
-        <button id="addTaskBtn">Adicionar tarefa</button>
-        <button id="voiceBtn">🎤</button>
-    </header>
-
-    <section class="task-list" id="taskList">
-        <!-- As tarefas serão adicionadas aqui -->
-    </section>
-</div>
-
-<script>
-    const taskInput = document.getElementById('taskInput');
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    const taskList = document.getElementById('taskList');
-    const voiceBtn = document.getElementById('voiceBtn');
-
-    let completedTasks = 0; // Contador de tarefas concluídas
-
-    // Função para adicionar uma nova tarefa
-    function addTask() {
-        const taskText = taskInput.value.trim();
-        if (taskText) {
-            const newTask = document.createElement('div');
-            newTask.className = 'task-card';
-            newTask.innerHTML = `
-                <h3>${taskText}</h3>
-                <p>Data: ${new Date().toLocaleDateString()}</p>
-                <button class="completeBtn">Concluir</button>
-                <button class="favoriteBtn">⭐ Favoritar</button>
-            `;
-            taskList.appendChild(newTask);
-            taskInput.value = ''; // Limpa o campo de entrada
-
-            // Adiciona evento ao botão de concluir
-            const completeBtn = newTask.querySelector('.completeBtn');
-            completeBtn.addEventListener('click', () => completeTask(newTask));
-
-            // Adiciona evento ao botão de favoritar
-            const favoriteBtn = newTask.querySelector('.favoriteBtn');
-            favoriteBtn.addEventListener('click', () => toggleFavorite(newTask));
-        }
-    }
-
-    // Função para concluir uma tarefa
-    function completeTask(task) {
-        task.classList.add('completed'); // Adiciona a classe para estilizar
-        task.querySelector('.completeBtn').disabled = true; // Desabilita o botão
-        completedTasks++; // Incrementa o contador de tarefas concluídas
-
-        // Verifica se o número de tarefas concluídas é um múltiplo de 3
-        if (completedTasks % 3 === 0) {
-            askHealthQuestions();
-        }
-    }
-
-    // Função para favoritar/desfavoritar uma tarefa
-    function toggleFavorite(task) {
-        task.classList.toggle('favorite'); // Alterna a classe de favorita
-        const favoriteBtn = task.querySelector('.favoriteBtn');
-
-        // Altera o texto do botão de favorito
-        if (task.classList.contains('favorite')) {
-            favoriteBtn.textContent = '⭐ Favoritado';
-        } else {
-            favoriteBtn.textContent = '⭐ Favoritar';
-        }
-    }
-
-    // Função para fazer as perguntas
-    function askHealthQuestions() {
-        const response1 = prompt("Já bebeu água hoje?");
-        const response2 = prompt("Como está a sua saúde mental?");
-        const response3 = prompt("Como está se sentindo hoje?");
-        
-        // Aqui você pode processar as respostas como quiser
-        console.log(response1, response2, response3);
-    }
-
-    // Adiciona evento ao botão "Adicionar tarefa"
-    addTaskBtn.addEventListener('click', addTask);
-
-    // Configura o reconhecimento de voz
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = 'pt-BR';
-
-    // Inicia o reconhecimento de voz
-    voiceBtn.addEventListener('click', () => {
-        recognition.start();
-    });
-
-    // Lida com o resultado do reconhecimento de voz
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        taskInput.value = transcript; // Coloca o texto reconhecido no campo de entrada
-        addTask(); // Adiciona a tarefa automaticamente
-    };
-
-    // Lida com erros
-    recognition.onerror = (event) => {
-        console.error('Erro no reconhecimento de voz: ', event.error);
-    };
-</script>
-
+    <div class="sidebar">
+        <img src="WhatsApp Image 2024-11-01 at 09.16.12.jpeg" alt="Logo" class="logo">
+        <h2>Todas as tarefas</h2>
+        <ul>
+            <li id="all-tasks-btn">Todas as Tarefas</li>
+            <li id="favorite-tasks-btn">Favoritos</li>
+            <li id="home-tasks-btn">Lazer</li>
+            <li id="work-tasks-btn">Trabalho</li>
+            <li id="college-tasks-btn">Faculdade</li>
+        </ul>
+    </div>
+    <div class="main">
+        <header>
+            <input type="text" id="task-input" placeholder="Adicione uma nova tarefa...">
+            <select id="category-select">
+                <option value="lazer">lazer</option>
+                <option value="trabalho">Trabalho</option>
+                <option value="faculdade">Faculdade</option>
+            </select>
+            <button id="add-task-btn">Adicionar Tarefa</button>
+        </header>
+        <div class="task-list" id="task-list"></div>
+        <div class="task-list" id="favorite-tasks-list" style="display: none;"></div>
+        <div class="task-list" id="home-tasks-list" style="display: none;"></div>
+        <div class="task-list" id="work-tasks-list" style="display: none;"></div>
+        <div class="task-list" id="college-tasks-list" style="display: none;"></div>
+        <footer>
+            <progress id="progress-bar" value="0" max="100"></progress>
+            <span id="progress-text">0% Concluído</span>
+        </footer>
+        <div id="notification" class="notification hidden">Hora de descansar!</div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
